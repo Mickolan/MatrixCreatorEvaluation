@@ -1,0 +1,84 @@
+// System calls
+#include <unistd.h>
+// Input/output streams and functions
+#include <iostream>
+
+// Interfaces with humidity sensor
+#include "matrix_hal/humidity_sensor.h"
+// Holds data from humidity sensor
+#include "matrix_hal/humidity_data.h"
+
+// Interfaces with pressure sensor
+#include "matrix_hal/pressure_sensor.h"
+// Holds data from pressure sensor
+#include "matrix_hal/pressure_data.h"
+
+// Communicates with MATRIX device
+#include "matrix_hal/matrixio_bus.h"
+
+#define ESC '\033'
+int main() {
+  // Create MatrixIOBus object for hardware communication
+  matrix_hal::MatrixIOBus bus;
+  // Initialize bus and exit program if error occurs
+  if (!bus.Init()) return false;
+  // The following code is part of main()
+
+  // Create HumidityData object
+  matrix_hal::HumidityData humidity_data;
+  // Create HumiditySensor object
+  matrix_hal::HumiditySensor humidity_sensor;
+  // Set humidity_sensor to use MatrixIOBus bus
+  humidity_sensor.Setup(&bus);
+
+// Create PressureData object
+  matrix_hal::PressureData pressure_data;
+  // Create PressureSensor object
+  matrix_hal::PressureSensor pressure_sensor;
+  // Set pressure_sensor to use MatrixIOBus bus
+  pressure_sensor.Setup(&bus);
+
+// initialisiere Bildschirm
+// lösche Bildschirm
+  std::cout << ESC << "[2J";
+  
+  
+// Schreibe Feldbeschriftungen
+//                                   12345678901234567890123456789
+  std::cout   << ESC << "[10;2f" << " [ Feuchte Sensor Output ]";
+  std::cout   << ESC << "[12;2f" << " [ rel. Luftfeuchte     %:"
+              << ESC << "[13;2f" << " [ Feuchtetemperatur   °C:"
+              << ESC << "[15;2f" << " [ Luftdruck          kPa:"
+              << ESC << "[16;2f" << " [ Luftdrucktemperatur °C:";
+
+  // Endless loop
+  while (true) {
+    // Overwrites humidity_data with new data from humidity sensor
+    humidity_sensor.Read(&humidity_data);
+    // Humidity output is represented in %
+    float humidity = humidity_data.humidity;
+    // Temperature output is represented in Celsius
+    float temperature = humidity_data.temperature;
+
+ // Overwrites pressure_data with new data from pressure sensor
+    pressure_sensor.Read(&pressure_data);
+    // Altitude output is represented in meters
+    float altitude = pressure_data.altitude;
+    // Pressure output is represented in kPa
+    float pressure = pressure_data.pressure;
+    // Temperature output is represented in Celsius
+    float temperature2 = pressure_data.temperature;
+
+
+//Werte schreiben
+  std::cout   << ESC << "[12;28f" << humidity
+              << ESC << "[13;28f" << temperature
+              << ESC << "[15;28f" << altitude
+              << ESC << "[16;28f" << temperature2;
+
+    // Sleep for 20000 microseconds
+    usleep(100000);
+  }
+
+  return 0;
+}
